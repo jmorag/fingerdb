@@ -9,7 +9,7 @@ maintainer:          Joseph Morag
 copyright:           Joseph Morag
 category:            Music, Web
 build-type:          Simple
-extra-source-files:  CHANGELOG.md
+extra-source-files:  CHANGELOG.md, README.org
 
 common common-deps
   build-depends: base >= 4.11 && < 5
@@ -20,10 +20,10 @@ common common-deps
                , resource-pool
                , servant
                , servant-server
-               , persistent
-               , persistent-postgresql
                , postgresql-simple
-               -- , music-suite
+               , xml
+               , lens
+               , cryptonite
 
 common common-warnings
   ghc-options: -Wall
@@ -39,6 +39,9 @@ library
   hs-source-dirs:      src
   default-language:    Haskell2010
   exposed-modules:     Fingerdb.Backend
+                     , Fingerdb.Database
+                     , Fingerdb.XML
+                     , Fingerdb.Models
   ghc-options:         -Wall -fno-warn-name-shadowing
 
 executable fingerdb-backend
