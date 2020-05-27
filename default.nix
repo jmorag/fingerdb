@@ -11,7 +11,6 @@ let
         };
       };
     };
-    allowBroken = true;
   };
   pkgs = import (builtins.fetchTarball {
     # Descriptive name to make the store path easier to identify
@@ -27,7 +26,7 @@ let
     source-overrides = { };
     modifier = drv:
       pkgs.haskell.lib.addBuildTools drv
-      (with pkgs.haskellPackages; [ cabal-install ]);
+      (with pkgs.haskellPackages; [ cabal-install hlint ]);
   };
   buildInputs = [ pkgs.libpqxx ];
 in pkg.overrideAttrs
