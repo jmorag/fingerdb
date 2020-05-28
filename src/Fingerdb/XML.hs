@@ -1,6 +1,8 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Fingerdb.XML
   ( separateFingerings,
@@ -27,20 +29,22 @@ import RIO hiding
   )
 import RIO.List (sortOn)
 import Text.XML.Light
+import Fmt
 
 -- | Remove the
 -- <technical><fingering>f</fingering><string>s</string></technical>
 -- elements from the top level score element
 separateFingerings :: Element -> (Element, [Element])
-separateFingerings top =
-  ( top & technical . elContent_ %~ filter (not . isFingering),
-    top ^.. technical <&> over elContent_ (filter isFingering)
+separateFingerings score =
+  ( score & nodes "technical" . elContent_ %~ filter (not . isFingering),
+    score ^.. nodes "technical" <&> over elContent_ (filter isFingering)
   )
 
+-- | Inverse of 'separateFingerings'
 mergeFingerings :: Element -> [Element] -> Element
 mergeFingerings music fingerings =
   over
-    (partsOf technical)
+    (partsOf $ nodes "technical")
     (zipWith merge fingerings)
     music
   where
@@ -51,8 +55,26 @@ isFingering = \case
   Elem e -> e ^. name `elem` ["fingering", "string"]
   _ -> False
 
-technical :: Traversal' Element Element
-technical = deepOf uniplate (filtered (\e -> e ^. name == "technical"))
+-- | Given start and end measure, adjust the measures of the given score to lie in
+-- that range. Returns error if the number of non-implicit measures doesn't
+-- correspond to the given parameters
+adjustMeasures :: Int -> Int -> Element -> Either String Element
+adjustMeasures beg end score =
+  let newMeasures = map (Just . show) [beg .. end]
+      oldMeasures = (score ^.. measureNumbers)
+   in if length newMeasures == length oldMeasures
+        then Right $ set (partsOf measureNumbers) newMeasures score
+        else
+          Left $
+            "Expected "
+              +| length newMeasures |+ " measures but got "
+              +| length oldMeasures |+ " measures instead"
+
+measureNumbers :: Traversal' Element (Maybe String)
+measureNumbers =
+  nodes "measure"
+    . filtered (\measure -> measure ^. (attr "implicit") /= Just "yes")
+    . attr "number"
 
 attr :: String -> Lens' Element (Maybe String)
 attr key = lens getter setter
@@ -67,10 +89,8 @@ attr key = lens getter setter
             Nothing -> node {elAttribs = oldAttrs}
             Just v -> node {elAttribs = Attr (QName key Nothing Nothing) v : oldAttrs}
 
-measures :: Traversal' Element Element
-measures = deepOf uniplate (filtered (\e -> e ^. name == "measure"))
-
-
+nodes :: String -> Traversal' Element Element
+nodes elementName = deepOf uniplate (filtered (\e -> e^.name == elementName))
 
 name :: Lens' Element String
 name = lens (qName . elName) (\e n -> e {elName = QName n Nothing Nothing})
