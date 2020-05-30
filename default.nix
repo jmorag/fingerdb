@@ -1,4 +1,13 @@
 let
+  inherit (import <nixpkgs> { }) fetchFromGitHub;
+  nixpkgs = fetchFromGitHub {
+    name = "nixos-unstable-2020-05-29";
+    owner = "nixos";
+    repo = "nixpkgs";
+    rev = "19aac2413ae2810a47850f165a592cbe0d06f744";
+    sha256 = "0m0h02avy888zmkrys9azs6sqx10my3gxi3f0m70fhsyc6shpc78";
+  };
+  pkgs = import nixpkgs { inherit config; };
   compilerVersion = "ghc883";
   config = {
     packageOverrides = pkgs: rec {
@@ -6,27 +15,27 @@ let
         packages = pkgs.haskell.packages // {
           "${compilerVersion}" =
             pkgs.haskell.packages."${compilerVersion}".override {
-              overrides = self: super: { };
+              overrides = self: super: {
+                ghc = super.ghc // { withPackages = super.ghc.withHoogle; };
+                ghcWithPackages = self.ghc.withPackages;
+
+                digestive-functors-aeson =
+                  pkgs.haskell.lib.doJailbreak super.digestive-functors-aeson;
+                req-conduit = pkgs.haskell.lib.dontCheck super.req-conduit;
+              };
             };
         };
       };
     };
+    allowBroken = true;
   };
-  pkgs = import (builtins.fetchTarball {
-    # Descriptive name to make the store path easier to identify
-    name = "nixos-unstable-2020-03-17";
-    url =
-      "https://github.com/nixos/nixpkgs/archive/a2e06fc3423c4be53181b15c28dfbe0bcf67dd73.tar.gz";
-    # Hash obtained using `nix-prefetch-url --unpack <url>`
-    sha256 = "0bjx4iq6nyhj47q5zkqsbfgng445xwprrslj1xrv56142jn8n5r9";
-  }) { inherit config; };
   compiler = pkgs.haskell.packages."${compilerVersion}";
   pkg = compiler.developPackage {
     root = ./.;
     source-overrides = { };
     modifier = drv:
       pkgs.haskell.lib.addBuildTools drv
-      (with pkgs.haskellPackages; [ cabal-install hlint ]);
+      (with pkgs.haskellPackages; [ cabal-install hlint hoogle ]);
   };
   buildInputs = [ pkgs.libpqxx ];
 in pkg.overrideAttrs
