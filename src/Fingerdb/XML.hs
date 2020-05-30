@@ -7,26 +7,14 @@
 module Fingerdb.XML
   ( separateFingerings,
     mergeFingerings,
+    adjustMeasures
   )
 where
 
-import Control.Lens
 import Data.Data.Lens
-import RIO hiding
-  ( ASetter,
-    ASetter',
-    Getting,
-    Lens,
-    Lens',
-    SimpleGetter,
-    (^.),
-    lens,
-    over,
-    set,
-    sets,
-    to,
-    view,
-  )
+import Fingerdb.Prelude
+import qualified RIO.ByteString as B
+import qualified RIO.Text as T
 import RIO.List (sortOn)
 import Text.XML.Light
 import Fmt
@@ -73,7 +61,7 @@ adjustMeasures beg end score =
 measureNumbers :: Traversal' Element (Maybe String)
 measureNumbers =
   nodes "measure"
-    . filtered (\measure -> measure ^. (attr "implicit") /= Just "yes")
+    . filtered (\measure -> measure ^. attr "implicit" /= Just "yes")
     . attr "number"
 
 attr :: String -> Lens' Element (Maybe String)
@@ -108,3 +96,21 @@ elContent_ = lens elContent (\e cs -> e {elContent = cs})
 
 _Element :: Prism' Content Element
 _Element = prism' Elem (\case (Elem e) -> Just e; _ -> Nothing)
+
+--------------------------------------------------------------------------------
+-- repl utils
+--------------------------------------------------------------------------------
+
+readXML :: FilePath -> IO Element
+readXML = fmap
+  (fromMaybe undefined . parseXMLDoc . T.unpack . decodeUtf8Lenient) . B.readFile
+
+printElem :: Element -> IO ()
+printElem = B.putStr . T.encodeUtf8 . T.pack . showElement
+
+printElems :: [Element] -> IO ()
+printElems es = printElem (unode "wrapper" es) >> B.putStr "\n"
+
+prok = readXML "/home/joseph/Documents/MuseScore3/Scores/Prokofiev_violin_concerto_No_2_excerpt.musicxml"
+
+brahms = readXML "/home/joseph/Documents/MuseScore3/Scores/Brahms_violin_concerto.musicxml"
