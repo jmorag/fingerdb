@@ -1,0 +1,3 @@
+* Fingerdb backend
+Implements database and api access for storing music fragments and fingerings.
+[[file:er-diagram.png][ER Diagram]]
