@@ -54,7 +54,7 @@ registerUser userParams = do
     Nothing -> pure $ RegistrationResult $ Left (jsonErrors errs)
     Just (username, password, email) -> do
       [user] <- insertUserDB username password email
-      logInfo $ "Registered user " <> display username
+      logInfo $ formatLn "Registered user {}" username
       pure $ RegistrationResult $ Right user
 
 registrationForm :: (HasDB m env, MonadRandom m) => Form Text m (Text, ByteString, EmailAddress)

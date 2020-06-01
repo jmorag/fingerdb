@@ -9,7 +9,7 @@ module Fingerdb.Database where
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.SqlQQ
 import Fingerdb.Models
-import RIO
+import Fingerdb.Prelude
 import RIO.Time
 import Text.EmailAddress (EmailAddress, toByteString)
 
@@ -25,7 +25,7 @@ type HasDB m env =
 runQ :: (FromRow r, ToRow q, HasDB m env) => Query -> q -> m [r]
 runQ q p = do
   conn <- view connL
-  logDebug $ "Running query: " <> display (tshow q)
+  logDebug $ fmtLn "Running query: " +|| q ||+ ""
   liftIO $ query conn q p
 
 insertUserDB :: HasDB m env => Text -> ByteString -> EmailAddress -> m [User]
