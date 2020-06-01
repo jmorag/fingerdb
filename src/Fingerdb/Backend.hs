@@ -1,10 +1,7 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoImplicitPrelude #-}
@@ -23,6 +20,8 @@ import Fingerdb.Handlers
 import Fingerdb.Models
 import Fingerdb.Prelude
 import Servant
+import Servant.HTML.Lucid
+import Lucid
 import Network.Wai.Handler.Warp
 
 type DBConnectionString = ByteString
@@ -41,13 +40,15 @@ type RegisterUser =
     :> ReqBody '[JSON] Value
     :> PostCreated '[JSON] RegistrationResult
 
-type API = RegisterUser
+type LandingPage = Get '[HTML] (Html ())
+
+type API = LandingPage :<|> RegisterUser :<|> Raw
 
 api :: Proxy API
 api = Proxy
 
 server :: (HasLogFunc env, HasConn env) => ServerT API (AppHandler env)
-server = registerUser
+server = landingPage :<|> registerUser :<|> serveDirectoryWebApp "static"
 
 startApp :: IO ()
 startApp = do

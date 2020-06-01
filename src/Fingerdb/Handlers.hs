@@ -7,6 +7,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE BlockArguments #-}
 
 module Fingerdb.Handlers where
 
@@ -24,6 +25,7 @@ import Network.HTTP.Req
 import qualified RIO.ByteString as B
 import qualified RIO.Text as T
 import Servant
+import Lucid
 import Text.Digestive
 import Text.Digestive.Aeson
 import Text.EmailAddress hiding (validate)
@@ -89,3 +91,14 @@ passwordSafe password =
             req Network.HTTP.Req.GET uri NoReqBody bsResponse mempty
         let compromised = B.split 10 (responseBody resp)
         pure $ none (suffix `B.isPrefixOf`) compromised
+
+landingPage :: AppHandler env (Html ())
+landingPage = pure do
+  html_ do
+    head_ do
+      meta_ [charset_ "UTF-8"]
+      title_ "Landing page"
+      link_ [rel_ "stylesheet", type_ "text/css", href_ "styles.css"]
+    body_ do
+      div_ do
+        div_ [class_ "header"] "hello babe"

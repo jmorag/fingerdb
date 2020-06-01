@@ -14,6 +14,7 @@ extra-source-files:  CHANGELOG.md, README.org
 common common-deps
   build-depends: base >= 4.11 && < 5,
                  aeson,
+                 clay,
                  cryptonite,
                  dhall,
                  digestive-functors,
@@ -24,6 +25,7 @@ common common-deps
                  generic-lens,
                  lens,
                  lens-aeson >= 1.1,
+                 lucid,
                  mtl,
                  postgresql-simple,
                  range,
@@ -33,6 +35,9 @@ common common-deps
                  req-conduit,
                  rio,
                  servant,
+                 servant-auth,
+                 servant-auth-server,
+                 servant-lucid,
                  servant-server,
                  xml,
                  warp
@@ -56,14 +61,13 @@ library
                      , Fingerdb.XML
                      , Fingerdb.Models
   exposed-modules:     Fingerdb.Backend
-  ghc-options:         -Wall -fno-warn-name-shadowing
 
 executable fingerdb-backend
   import:              common-deps, common-warnings
   main-is:             Main.hs
   hs-source-dirs:      app
   default-language:    Haskell2010
-  ghc-options:         -threaded -O2
+  ghc-options:         -threaded
   build-depends:       fingerdb-backend
 
 test-suite fingerdb-backend-tests
@@ -72,5 +76,8 @@ test-suite fingerdb-backend-tests
   hs-source-dirs:      test
   main-is:             Main.hs
   default-language:    Haskell2010
-  ghc-options:         -Wall -threaded
-  build-depends:       hedgehog
+  ghc-options:         -threaded
+  build-depends:       hedgehog,
+                       tasty,
+                       tasty-hunit,
+                       tasty-hedgehog
