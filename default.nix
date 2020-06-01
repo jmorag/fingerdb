@@ -35,7 +35,7 @@ let
     source-overrides = { };
     modifier = drv:
       pkgs.haskell.lib.addBuildTools drv
-      (with pkgs.haskellPackages; [ cabal-install hlint hoogle ]);
+      (with pkgs.haskellPackages; [ cabal-install hlint hoogle ghcid ]);
   };
   buildInputs = [ pkgs.libpqxx ];
 in pkg.overrideAttrs
