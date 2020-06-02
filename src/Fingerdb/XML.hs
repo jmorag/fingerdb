@@ -13,11 +13,8 @@ where
 
 import Data.Data.Lens
 import Fingerdb.Prelude
-import qualified RIO.ByteString as B
-import qualified RIO.Text as T
 import RIO.List (sortOn)
 import Text.XML.Light
-import Fmt
 
 -- | Remove the
 -- <technical><fingering>f</fingering><string>s</string></technical>
@@ -68,14 +65,14 @@ attr :: String -> Lens' Element (Maybe String)
 attr key = lens getter setter
   where
     getter = findAttrBy (\q -> qName q == key)
-    setter node val =
-      -- Setting an attribute key's value to Nothing removes it from the node
+    setter xmlNode val =
+      -- Setting an attribute key's value to Nothing removes it from the xmlNode
       -- Setting an existing key moves it to the front of the attr list
       -- This might break laws...
-      let oldAttrs = filter (\(Attr (QName k _ _) _) -> k /= key) (elAttribs node)
+      let oldAttrs = filter (\(Attr (QName k _ _) _) -> k /= key) (elAttribs xmlNode)
        in case val of
-            Nothing -> node {elAttribs = oldAttrs}
-            Just v -> node {elAttribs = Attr (QName key Nothing Nothing) v : oldAttrs}
+            Nothing -> xmlNode {elAttribs = oldAttrs}
+            Just v -> xmlNode {elAttribs = Attr (QName key Nothing Nothing) v : oldAttrs}
 
 nodes :: String -> Traversal' Element Element
 nodes elementName = deepOf uniplate (filtered (\e -> e^.name == elementName))
@@ -101,16 +98,16 @@ _Element = prism' Elem (\case (Elem e) -> Just e; _ -> Nothing)
 -- repl utils
 --------------------------------------------------------------------------------
 
-readXML :: FilePath -> IO Element
-readXML = fmap
-  (fromMaybe undefined . parseXMLDoc . T.unpack . decodeUtf8Lenient) . B.readFile
+-- readXML :: FilePath -> IO Element
+-- readXML = fmap
+--   (fromMaybe undefined . parseXMLDoc . T.unpack . decodeUtf8Lenient) . B.readFile
 
-printElem :: Element -> IO ()
-printElem = B.putStr . T.encodeUtf8 . T.pack . showElement
+-- printElem :: Element -> IO ()
+-- printElem = B.putStr . T.encodeUtf8 . T.pack . showElement
 
-printElems :: [Element] -> IO ()
-printElems es = printElem (unode "wrapper" es) >> B.putStr "\n"
+-- printElems :: [Element] -> IO ()
+-- printElems es = printElem (unode "wrapper" es) >> B.putStr "\n"
 
-prok = readXML "/home/joseph/Documents/MuseScore3/Scores/Prokofiev_violin_concerto_No_2_excerpt.musicxml"
+-- prok = readXML "/home/joseph/Documents/MuseScore3/Scores/Prokofiev_violin_concerto_No_2_excerpt.musicxml"
 
-brahms = readXML "/home/joseph/Documents/MuseScore3/Scores/Brahms_violin_concerto.musicxml"
+-- brahms = readXML "/home/joseph/Documents/MuseScore3/Scores/Brahms_violin_concerto.musicxml"
