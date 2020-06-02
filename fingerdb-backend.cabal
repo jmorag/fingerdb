@@ -36,6 +36,7 @@ common common-deps
                  servant-auth,
                  servant-auth-server,
                  servant-lucid,
+                 servant-multipart,
                  servant-server,
                  xml,
                  warp

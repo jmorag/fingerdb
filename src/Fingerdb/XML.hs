@@ -13,7 +13,7 @@ where
 
 import Data.Data.Lens
 import Fingerdb.Prelude
-import RIO.List (sortOn)
+import RIO.List (sortOn, find)
 import Text.XML.Light
 
 -- | Remove the
@@ -43,7 +43,7 @@ isFingering = \case
 -- | Given start and end measure, adjust the measures of the given score to lie in
 -- that range. Returns error if the number of non-implicit measures doesn't
 -- correspond to the given parameters
-adjustMeasures :: Int -> Int -> Element -> Either String Element
+adjustMeasures :: Int -> Int -> Element -> Either Text Element
 adjustMeasures beg end score =
   let newMeasures = map (Just . show) [beg .. end]
       oldMeasures = (score ^.. measureNumbers)
