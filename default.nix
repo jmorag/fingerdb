@@ -19,15 +19,11 @@ let
                 ghc = super.ghc // { withPackages = super.ghc.withHoogle; };
                 ghcWithPackages = self.ghc.withPackages;
 
-                digestive-functors-aeson =
-                  pkgs.haskell.lib.doJailbreak super.digestive-functors-aeson;
-                req-conduit = pkgs.haskell.lib.dontCheck super.req-conduit;
               };
             };
         };
       };
     };
-    allowBroken = true;
   };
   compiler = pkgs.haskell.packages."${compilerVersion}";
   pkg = compiler.developPackage {
@@ -35,7 +31,7 @@ let
     source-overrides = { };
     modifier = drv:
       pkgs.haskell.lib.addBuildTools drv
-      (with pkgs.haskellPackages; [ cabal-install hlint hoogle ghcid ]);
+      (with pkgs.haskellPackages; [ cabal-install hoogle ghcid ]);
   };
   buildInputs = [ pkgs.libpqxx ];
 in pkg.overrideAttrs

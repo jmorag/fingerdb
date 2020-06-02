@@ -2,27 +2,25 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE RecordWildCards #-}
 
 module Fingerdb.Backend where
 
 -- import Dhall
 
-import qualified RIO.ByteString as B
 import Data.Aeson
 import Data.Pool
 import Database.PostgreSQL.Simple
-import Fmt
 import Fingerdb.Handlers
 import Fingerdb.Models
 import Fingerdb.Prelude
-import Servant
-import Servant.HTML.Lucid
 import Lucid
 import Network.Wai.Handler.Warp
+import Servant
+import Servant.HTML.Lucid
 
 type DBConnectionString = ByteString
 
@@ -59,5 +57,5 @@ startApp = do
       port = 8081
   pool <- initConnectionPool connString
   withLogFunc logOptions $ \logger -> withResource pool $ \db -> do
-      (B.putStr $ "Starting server on port " +|| port ||+ "\n")
-      run port $ serve api (hoistServer api (nt (App {..})) server)
+    runReaderT (logInfo $ "Starting server on port " +|| port ||+ "\n") logger
+    run port $ serve api (hoistServer api (nt (App {..})) server)

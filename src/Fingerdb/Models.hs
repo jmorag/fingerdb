@@ -11,6 +11,7 @@ module Fingerdb.Models where
 
 import Data.Aeson
 import Database.PostgreSQL.Simple
+import Database.PostgreSQL.Simple.FromField
 import Fingerdb.Prelude hiding ((.=))
 import RIO.Time
 import Text.EmailAddress
@@ -30,36 +31,24 @@ instance HasConn App where
 instance HasLogFunc App where
   logFuncL = lens logger (\x y -> x {logger = y})
 
+newtype Password = Password { getPassword :: ByteString }
+instance ToJSON Password where
+  toJSON _ = "******************"
+instance FromField Password where
+  fromField f = fmap Password . fromField f
+
 data User
   = User
       { userId :: !Int,
         username :: !Text,
         email :: !EmailAddress,
-        -- | salt is included in bytestring
-        passwordHash :: !ByteString,
+        password :: !Password,
         createdAt :: !UTCTime,
         updatedAt :: !UTCTime
       }
   deriving (Generic)
 
 instance ToJSON User where
-  -- Do NOT insert password hash back into json.
-  toJSON User {..} =
-    object
-      [ "userId" .= userId,
-        "username" .= username,
-        "email" .= email,
-        "createdAt" .= createdAt,
-        "updatedAt" .= updatedAt
-      ]
-  toEncoding User {..} =
-    pairs
-      ( "userId" .= userId
-          <> "username" .= username
-          <> "email" .= email
-          <> "createdAt" .= createdAt
-          <> "updatedAt" .= updatedAt
-      )
 
 instance FromRow User
 
