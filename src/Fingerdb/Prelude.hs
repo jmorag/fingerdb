@@ -1,4 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 module Fingerdb.Prelude
   ( module X,
