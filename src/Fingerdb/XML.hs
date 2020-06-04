@@ -1,19 +1,19 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module Fingerdb.XML
   ( separateFingerings,
     mergeFingerings,
-    adjustMeasures
+    adjustMeasures,
   )
 where
 
 import Data.Data.Lens
 import Fingerdb.Prelude
-import RIO.List (sortOn, find)
+import RIO.List (find, sortOn)
 import Text.XML.Light
 
 -- | Remove the
@@ -75,7 +75,7 @@ attr key = lens getter setter
             Just v -> xmlNode {elAttribs = Attr (QName key Nothing Nothing) v : oldAttrs}
 
 nodes :: String -> Traversal' Element Element
-nodes elementName = deepOf uniplate (filtered (\e -> e^.name == elementName))
+nodes elementName = deepOf uniplate (filtered (\e -> e ^. name == elementName))
 
 name :: Lens' Element String
 name = lens (qName . elName) (\e n -> e {elName = QName n Nothing Nothing})
@@ -93,7 +93,6 @@ elContent_ = lens elContent (\e cs -> e {elContent = cs})
 
 _Element :: Prism' Content Element
 _Element = prism' Elem (\case (Elem e) -> Just e; _ -> Nothing)
-
 --------------------------------------------------------------------------------
 -- repl utils
 --------------------------------------------------------------------------------

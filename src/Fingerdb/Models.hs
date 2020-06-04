@@ -1,11 +1,12 @@
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE NoMonoLocalBinds #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE ConstraintKinds #-}
 
 module Fingerdb.Models where
 
@@ -15,10 +16,11 @@ import Database.PostgreSQL.Simple.FromField
 import Fingerdb.Prelude hiding ((.=))
 import RIO.List (headMaybe)
 import qualified RIO.Text as T
-import Text.EmailAddress
-import Servant.Multipart
 import Servant.Auth.Server
+import Servant.Multipart
+import Text.EmailAddress
 import Text.XML.Light
+import Web.FormUrlEncoded
 
 data App
   = App
@@ -46,9 +48,11 @@ instance HasSessionSettings App where
       (\app -> (cookieSettings app, jwtSettings app))
       (\x (cookie, jwt) -> x {cookieSettings = cookie, jwtSettings = jwt})
 
-newtype Password = Password { getPassword :: ByteString }
+newtype Password = Password {getPassword :: ByteString}
+
 instance ToJSON Password where
   toJSON _ = "******************"
+
 instance FromField Password where
   fromField f = fmap Password . fromField f
 
@@ -65,9 +69,49 @@ data User
   deriving (Generic)
 
 instance FromJSON User
+
 instance ToJSON User
+
 instance FromJWT User
+
 instance ToJWT User
+
+-- encodingOpts :: Options
+-- encodingOpts =
+--   defaultOptions
+--     { Data.Aeson.fieldLabelModifier = drop 1 . dropWhile (/= '_')
+--     }
+
+-- decodingOpts :: String -> Options
+-- decodingOpts prefix =
+--   defaultOptions
+--     -- { Data.Aeson.fieldLabelModifier = (prefix ++)
+--     -- }
+
+data RegistrationParams
+  = RegistrationParams
+      { username :: !Text,
+        password :: !Text,
+        email :: !Text
+      }
+  deriving (Generic, Show)
+
+instance FromJSON RegistrationParams
+
+-- where parseJSON = genericParseJSON (decodingOpts "registration_")
+
+instance ToJSON RegistrationParams
+
+-- where toJSON = genericToJSON encodingOpts
+
+instance FromForm RegistrationParams
+
+-- where
+-- fromForm =
+--   genericFromForm
+--     defaultFormOptions
+--       { Web.FormUrlEncoded.fieldLabelModifier = (drop 1 . dropWhile (/= '_'))
+--       }
 
 newtype RegistrationResult
   = RegistrationResult
@@ -82,6 +126,7 @@ data LoginParams
         password :: !Text
       }
   deriving (Generic)
+
 instance FromJSON LoginParams
 
 instance ToJSON RegistrationResult where
@@ -104,13 +149,14 @@ data Music
   deriving (Generic)
 
 instance FromMultipart Mem Music where
-  fromMultipart form = Music
-    <$> lookupInput "composer_first_name" form
-    <*> pure (lookupInput "composer_middle_name" form)
-    <*> lookupInput "composer_last_name" form
-    <*> lookupInput "title" form
-    <*> pure (lookupInput "movement_name" form)
-    <*> pure (lookupInput "movement_number" form >>= readMaybe . T.unpack)
-    <*> (lookupInput "start_measure" form >>= readMaybe . T.unpack)
-    <*> (lookupInput "end_measure" form >>= readMaybe . T.unpack)
-    <*> (headMaybe (files form) >>= parseXMLDoc . fdPayload)
+  fromMultipart form =
+    Music
+      <$> lookupInput "composer_first_name" form
+      <*> pure (lookupInput "composer_middle_name" form)
+      <*> lookupInput "composer_last_name" form
+      <*> lookupInput "title" form
+      <*> pure (lookupInput "movement_name" form)
+      <*> pure (lookupInput "movement_number" form >>= readMaybe . T.unpack)
+      <*> (lookupInput "start_measure" form >>= readMaybe . T.unpack)
+      <*> (lookupInput "end_measure" form >>= readMaybe . T.unpack)
+      <*> (headMaybe (files form) >>= parseXMLDoc . fdPayload)

@@ -1,8 +1,9 @@
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Fingerdb.Database where
@@ -12,11 +13,10 @@ import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.SqlQQ
 import Fingerdb.Models
 import Fingerdb.Prelude
-import RIO.Time
 import qualified RIO.Text as T
-import Text.XML.Light
-
+import RIO.Time
 import Text.EmailAddress (EmailAddress, toByteString)
+import Text.XML.Light
 
 type HasDB m env =
   ( Monad m,
@@ -36,11 +36,12 @@ runQ q p = do
 insertUserDB :: HasDB m env => Text -> ByteString -> EmailAddress -> m Int
 insertUserDB username password email = do
   now <- getCurrentTime
-  [Only userId] <- runQ
-    [sql| insert into users
+  [Only userId] <-
+    runQ
+      [sql| insert into users
            (username, password, email, created_at, updated_at)
            values (?, ?, ?, ?, ?) returning id |]
-    (username, password, toByteString email, now, now)
+      (username, password, toByteString email, now, now)
   pure userId
 
 emailAvailable :: (HasDB m env) => EmailAddress -> m Bool
@@ -62,7 +63,7 @@ validateLogin loginParams = do
   ids <-
     runQ @(Only Int)
       [sql| select id from users where username = ? OR email = ? |]
-      [username loginParams]
+      [username (loginParams :: LoginParams)]
   case ids of
     [] -> pure (Left "user does not exist")
     [Only key] -> do
@@ -70,8 +71,8 @@ validateLogin loginParams = do
         runQ @(_, _, ByteString)
           [sql| select (username, email, password) from users where id = ? |]
           [key]
-      case validatePasswordEither (encodeUtf8 (password loginParams)) hash of
-        Left err -> logDebug (""+||err||+"") >> pure (Left (T.pack err))
+      case validatePasswordEither (encodeUtf8 (password (loginParams :: LoginParams))) hash of
+        Left err -> logDebug ("" +|| err ||+ "") >> pure (Left (T.pack err))
         Right False -> logDebug "incorrect login credentials" >> pure (Left "incorrect login credentials")
         Right True -> pure $ Right (User key name email)
 
@@ -79,7 +80,8 @@ insertMusicDB :: (HasDB m env) => User -> Music -> m Int
 insertMusicDB u m = do
   now <- getCurrentTime
   [Only musicId] <-
-    runQ [sql| insert into music
+    runQ
+      [sql| insert into music
           ( user_id
           , composer_first_name
           , composer_middle_name
@@ -94,17 +96,17 @@ insertMusicDB u m = do
           , contents::xml
           ) values
           (? , ? , ? , ? , ? , ? , ? , ? , ? , ? , ? , ?) returning id|]
-          ( userId u
-          , composerFirstName m
-          , composerMiddleName m
-          , composerLastName m
-          , title m
-          , movementName m
-          , movementNumber m
-          , startMeasure m
-          , endMeasure m
-          , now
-          , now
-          , showTopElement (music m)
-          )
+      ( userId u,
+        composerFirstName m,
+        composerMiddleName m,
+        composerLastName m,
+        title m,
+        movementName m,
+        movementNumber m,
+        startMeasure m,
+        endMeasure m,
+        now,
+        now,
+        showTopElement (music m)
+      )
   pure musicId

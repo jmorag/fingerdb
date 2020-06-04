@@ -39,6 +39,7 @@ common common-deps
                  servant-multipart,
                  servant-server,
                  xml,
+                 wai-extra,
                  warp
 
 common common-warnings

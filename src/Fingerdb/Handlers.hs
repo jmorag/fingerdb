@@ -75,9 +75,9 @@ loginUser loginParams = do
          Nothing           -> throwError err401
          Just applyCookies -> return $ applyCookies NoContent
 
-registerUser :: (HasDB m env, MonadRandom m) => Value -> m RegistrationResult
+registerUser :: (HasDB m env, MonadRandom m) => RegistrationParams -> m RegistrationResult
 registerUser userParams = do
-  formResult <- runForm registrationForm userParams
+  formResult <- runForm registrationForm (toJSON userParams)
   case formResult of
     Succeeded (name, password, email) -> do
       userId <- insertUserDB name (getPassword password) email
@@ -140,6 +140,16 @@ landingPage = pure do
     body_ do
       div_ do
         div_ [class_ "header"] "hello babe"
+
+displayRegistrationForm :: Monad m => m (Html ())
+displayRegistrationForm =
+  pure $ form_ [action_ "/register", method_ "post"] do
+    traverse_ textInput ["username", "password", "email"]
+    input_ [type_ "submit"]
+  where
+    textInput label = do
+      label_ [Lucid.for_ label] (toHtml (label <> ":")) <> br_ []
+      input_ [type_ "text", id_ label] <> br_ []
 
 uploadMusic :: (HasDB m env, MonadError ServerError m) => User -> Music -> m Int
 uploadMusic u m = do

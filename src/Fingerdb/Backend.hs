@@ -11,7 +11,7 @@ module Fingerdb.Backend where
 
 -- import Dhall
 
-import Data.Aeson
+-- import Data.Aeson
 import Data.Pool
 import Database.PostgreSQL.Simple (Connection, close, connectPostgreSQL)
 import Fingerdb.Handlers
@@ -37,8 +37,10 @@ initConnectionPool connStr =
 
 type Register =
   "register"
-    :> ReqBody '[JSON] Value
+    :> ReqBody '[JSON, FormUrlEncoded] RegistrationParams
     :> PostCreated '[JSON] RegistrationResult
+    :<|> "register"
+    :> Get '[HTML] (Html ())
 
 type LandingPage = Get '[HTML] (Html ())
 
@@ -74,7 +76,7 @@ unprotected ::
   (HasConn env, HasLogFunc env, HasSessionSettings env) =>
   ServerT Unprotected (AppHandler env)
 unprotected =
-  registerUser
+  (registerUser :<|> displayRegistrationForm)
     :<|> loginUser
     :<|> landingPage
     :<|> serveDirectoryWebApp "static"
